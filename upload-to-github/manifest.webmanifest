@@ -1,0 +1,18 @@
+{
+  "name": "进货利润速算",
+  "short_name": "利润速算",
+  "description": "输入 NZD 不含 GST 进货价和当前卖价，快速计算建议售价和真实毛利。",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f6f7f4",
+  "theme_color": "#12251f",
+  "icons": [
+    {
+      "src": "./icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

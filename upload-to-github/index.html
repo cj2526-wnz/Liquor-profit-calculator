@@ -1,0 +1,1082 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#12251f">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="利润速算">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <title>进货利润速算</title>
+  <link rel="manifest" href="./manifest.webmanifest">
+  <link rel="icon" href="./icon.svg" type="image/svg+xml">
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f6f7f4;
+      --surface: #ffffff;
+      --surface-soft: #eef3ee;
+      --ink: #17211c;
+      --muted: #66736b;
+      --line: #dbe2dc;
+      --accent: #157b63;
+      --accent-strong: #0f624f;
+      --accent-soft: #dff2eb;
+      --amber: #a06000;
+      --rose: #b23a48;
+      --shadow: 0 18px 45px rgba(21, 37, 30, 0.12);
+      --radius: 8px;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background:
+        radial-gradient(circle at 12% 14%, rgba(119, 44, 62, 0.30), transparent 30%),
+        radial-gradient(circle at 80% 10%, rgba(194, 116, 58, 0.22), transparent 30%),
+        radial-gradient(circle at 72% 78%, rgba(54, 106, 88, 0.24), transparent 34%),
+        linear-gradient(135deg, #0b1010 0%, #1a1518 43%, #18261f 100%),
+        #12251f;
+      color: var(--ink);
+    }
+
+    button,
+    input,
+    select {
+      font: inherit;
+    }
+
+    button {
+      cursor: pointer;
+    }
+
+    .app {
+      width: min(1120px, calc(100vw - 32px));
+      margin: 0 auto;
+      padding: 24px 0 34px;
+      position: relative;
+    }
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 18px;
+      margin-bottom: 16px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      min-width: 0;
+    }
+
+    .logo {
+      width: 44px;
+      height: 44px;
+      display: grid;
+      place-items: center;
+      border-radius: 8px;
+      background: linear-gradient(145deg, #18382f, #5b2436);
+      color: #f8fff9;
+      box-shadow: 0 10px 24px rgba(18, 37, 31, 0.18);
+      flex: 0 0 auto;
+    }
+
+    .logo svg {
+      width: 25px;
+      height: 25px;
+    }
+
+    h1 {
+      font-size: clamp(22px, 3vw, 34px);
+      line-height: 1.1;
+      margin: 0;
+      letter-spacing: 0;
+      color: #f8fff9;
+    }
+
+    .subtitle {
+      margin: 4px 0 0;
+      color: rgba(248, 255, 249, 0.72);
+      font-size: 14px;
+    }
+
+    .status {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 9px 12px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.13);
+      color: rgba(248, 255, 249, 0.82);
+      font-size: 13px;
+      white-space: nowrap;
+    }
+
+    .pulse {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #d19a5b;
+      box-shadow: 0 0 0 5px rgba(209, 154, 91, 0.16);
+    }
+
+    .workspace {
+      display: grid;
+      grid-template-columns: minmax(300px, 368px) 1fr;
+      gap: 16px;
+      align-items: start;
+    }
+
+    .panel {
+      position: relative;
+      overflow: hidden;
+      background:
+        linear-gradient(145deg, rgba(255, 255, 255, 0.88), rgba(244, 237, 229, 0.75) 48%, rgba(228, 239, 233, 0.80)),
+        rgba(255, 255, 255, 0.92);
+      border: 1px solid rgba(255, 255, 255, 0.64);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(18px);
+    }
+
+    .panel::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background:
+        linear-gradient(115deg, rgba(255, 255, 255, 0.62), rgba(250, 244, 236, 0.34) 38%, rgba(105, 39, 56, 0.20) 70%, rgba(24, 63, 51, 0.18)),
+        url("./wine-background.png") center / cover no-repeat;
+      opacity: 0.43;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .panel > * {
+      position: relative;
+      z-index: 1;
+    }
+
+    .controls {
+      padding: 14px 18px 18px;
+      position: sticky;
+      top: 16px;
+    }
+
+    .section-title {
+      margin: 0 0 6px;
+      font-size: 15px;
+      line-height: 1.3;
+      color: #3c342f;
+      font-weight: 750;
+    }
+
+    .field {
+      display: grid;
+      gap: 6px;
+      margin-bottom: 12px;
+    }
+
+    label {
+      color: #61574f;
+      font-size: 13px;
+      font-weight: 650;
+    }
+
+    .money-input {
+      display: grid;
+      grid-template-columns: 96px 1fr;
+      border: 1px solid rgba(207, 190, 176, 0.88);
+      border-radius: var(--radius);
+      overflow: hidden;
+      background: rgba(255, 251, 246, 0.88);
+      box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.75),
+        0 10px 22px rgba(48, 31, 25, 0.08);
+      transition: border-color 160ms ease, box-shadow 160ms ease;
+    }
+
+    .money-input:focus-within {
+      border-color: #9f644d;
+      box-shadow: 0 0 0 4px rgba(159, 100, 77, 0.13);
+    }
+
+    .currency-prefix {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-right: 1px solid var(--line);
+      background: rgba(244, 232, 222, 0.82);
+      color: #5b473d;
+      font-size: 14px;
+      font-weight: 800;
+    }
+
+    select,
+    input {
+      border: 0;
+      outline: 0;
+      background: transparent;
+      color: var(--ink);
+    }
+
+    select {
+      padding: 0 12px;
+      color: #435047;
+      appearance: none;
+      background-image:
+        linear-gradient(45deg, transparent 50%, #68756d 50%),
+        linear-gradient(135deg, #68756d 50%, transparent 50%);
+      background-position:
+        calc(100% - 18px) 50%,
+        calc(100% - 13px) 50%;
+      background-size: 5px 5px, 5px 5px;
+      background-repeat: no-repeat;
+    }
+
+    .money-input input {
+      width: 100%;
+      padding: 13px 14px;
+      font-size: 25px;
+      font-weight: 780;
+      letter-spacing: 0;
+    }
+
+    .mode-toggle {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 4px;
+      padding: 4px;
+      border: 1px solid rgba(207, 190, 176, 0.84);
+      border-radius: var(--radius);
+      background: rgba(241, 231, 222, 0.82);
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.66);
+    }
+
+    .mode-toggle button {
+      min-height: 39px;
+      border: 0;
+      border-radius: 6px;
+      background: transparent;
+      color: #665b52;
+      font-size: 14px;
+      font-weight: 700;
+    }
+
+    .mode-toggle button.active {
+      background: #fff;
+      color: #7c3a4b;
+      box-shadow: 0 6px 16px rgba(74, 42, 33, 0.13);
+    }
+
+    .unit-toggle {
+      grid-template-columns: repeat(3, 1fr);
+    }
+
+    .slider-panel {
+      padding: 12px 13px;
+      border: 1px solid rgba(207, 190, 176, 0.84);
+      border-radius: var(--radius);
+      background: rgba(255, 251, 246, 0.88);
+      box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.75),
+        0 10px 22px rgba(48, 31, 25, 0.08);
+    }
+
+    .slider-readout {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 10px;
+    }
+
+    .slider-readout strong {
+      font-size: 28px;
+      line-height: 1;
+      color: #7c3a4b;
+    }
+
+    .slider-readout span {
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    input[type="range"] {
+      width: 100%;
+      accent-color: #8f4658;
+      cursor: pointer;
+    }
+
+    .help {
+      margin: 9px 0 0;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.55;
+    }
+
+    .mini-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-top: 0;
+    }
+
+    .compact-field {
+      display: grid;
+      gap: 7px;
+    }
+
+    .compact-input {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      height: 42px;
+      border: 1px solid rgba(207, 190, 176, 0.84);
+      border-radius: var(--radius);
+      padding: 0 11px;
+      background: rgba(255, 251, 246, 0.88);
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.75);
+    }
+
+    .compact-input input {
+      width: 100%;
+      min-width: 0;
+      font-weight: 700;
+    }
+
+    .compact-input span {
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .rates {
+      margin-top: 22px;
+      padding-top: 18px;
+      border-top: 1px solid var(--line);
+    }
+
+    .chip-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      min-height: 34px;
+      padding: 0 10px;
+      border: 1px solid #cbd7d0;
+      border-radius: 999px;
+      background: #fff;
+      color: #25312a;
+      font-size: 13px;
+      font-weight: 750;
+    }
+
+    .chip button {
+      width: 18px;
+      height: 18px;
+      border: 0;
+      border-radius: 50%;
+      background: #eef2ef;
+      color: #607067;
+      line-height: 1;
+      padding: 0;
+    }
+
+    .add-rate {
+      display: grid;
+      grid-template-columns: 1fr 42px;
+      gap: 8px;
+    }
+
+    .add-rate input {
+      height: 42px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: #fff;
+      padding: 0 12px;
+      font-weight: 750;
+    }
+
+    .icon-btn {
+      display: grid;
+      place-items: center;
+      width: 42px;
+      height: 42px;
+      border: 0;
+      border-radius: var(--radius);
+      background: var(--accent);
+      color: #fff;
+      box-shadow: 0 8px 18px rgba(21, 123, 99, 0.22);
+    }
+
+    .icon-btn svg {
+      width: 19px;
+      height: 19px;
+    }
+
+    .results {
+      padding: 18px;
+    }
+
+    .hero-metric {
+      display: grid;
+      grid-template-columns: minmax(0, 1.2fr) minmax(180px, 0.8fr);
+      gap: 14px;
+      margin-bottom: 14px;
+    }
+
+    .metric {
+      padding: 18px;
+      border-radius: var(--radius);
+      background: #12251f;
+      color: #fff;
+      min-width: 0;
+      overflow: hidden;
+    }
+
+    .metric.secondary {
+      background: #eef3ee;
+      color: var(--ink);
+      border: 1px solid var(--line);
+    }
+
+    .metric-label {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      color: rgba(255, 255, 255, 0.7);
+      font-size: 13px;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+
+    .secondary .metric-label {
+      color: var(--muted);
+    }
+
+    .metric-value {
+      font-size: clamp(26px, 5vw, 44px);
+      line-height: 1;
+      font-weight: 820;
+      letter-spacing: 0;
+      overflow-wrap: anywhere;
+    }
+
+    .metric-note {
+      margin-top: 11px;
+      color: rgba(255, 255, 255, 0.68);
+      font-size: 13px;
+    }
+
+    .secondary .metric-note {
+      color: var(--muted);
+    }
+
+    .table-wrap {
+      overflow: auto;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: #fff;
+    }
+
+    table {
+      width: 100%;
+      min-width: 620px;
+      border-collapse: collapse;
+    }
+
+    th,
+    td {
+      padding: 14px 16px;
+      text-align: right;
+      border-bottom: 1px solid #edf1ee;
+      white-space: nowrap;
+    }
+
+    th:first-child,
+    td:first-child {
+      text-align: left;
+    }
+
+    th {
+      position: sticky;
+      top: 0;
+      background: #f8faf8;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0;
+      z-index: 1;
+    }
+
+    td {
+      font-size: 15px;
+      font-weight: 720;
+    }
+
+    tr:last-child td {
+      border-bottom: 0;
+    }
+
+    tr.highlight td {
+      background: var(--accent-soft);
+    }
+
+    .rate-pill {
+      display: inline-flex;
+      align-items: center;
+      min-width: 62px;
+      justify-content: center;
+      padding: 5px 9px;
+      border-radius: 999px;
+      background: #edf4f0;
+      color: var(--accent-strong);
+      font-weight: 820;
+    }
+
+    .profit {
+      color: var(--accent-strong);
+    }
+
+    .loss {
+      color: var(--rose);
+    }
+
+    .summary-band {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      margin-top: 14px;
+    }
+
+    .summary {
+      padding: 15px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: rgba(255, 255, 255, 0.82);
+    }
+
+    .summary span {
+      display: block;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 750;
+      margin-bottom: 7px;
+    }
+
+    .summary strong {
+      display: block;
+      font-size: 18px;
+      overflow-wrap: anywhere;
+    }
+
+    .copy-row {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      margin-top: 14px;
+    }
+
+    .text-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      min-height: 40px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: #fff;
+      color: #2b3930;
+      padding: 0 13px;
+      font-size: 13px;
+      font-weight: 760;
+    }
+
+    .text-btn.primary {
+      border-color: var(--accent);
+      background: var(--accent);
+      color: #fff;
+    }
+
+    .text-btn svg {
+      width: 17px;
+      height: 17px;
+    }
+
+    .empty {
+      display: grid;
+      place-items: center;
+      min-height: 360px;
+      text-align: center;
+      color: var(--muted);
+      padding: 28px;
+      border: 1px solid rgba(203, 215, 208, 0.84);
+      border-radius: var(--radius);
+      background: rgba(255, 255, 255, 0.70);
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.74);
+    }
+
+    .empty strong {
+      display: block;
+      color: var(--ink);
+      margin-bottom: 7px;
+      font-size: 18px;
+    }
+
+    .toast {
+      position: fixed;
+      left: 50%;
+      bottom: 22px;
+      transform: translateX(-50%) translateY(18px);
+      opacity: 0;
+      pointer-events: none;
+      padding: 11px 14px;
+      border-radius: 999px;
+      background: #12251f;
+      color: #fff;
+      font-size: 13px;
+      box-shadow: 0 12px 30px rgba(18, 37, 31, 0.22);
+      transition: opacity 180ms ease, transform 180ms ease;
+    }
+
+    .toast.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+
+    @media (max-width: 860px) {
+      .app {
+        width: min(100% - 24px, 680px);
+        padding-top: 18px;
+      }
+
+      .topbar,
+      .workspace,
+      .hero-metric,
+      .summary-band {
+        grid-template-columns: 1fr;
+      }
+
+      .topbar {
+        display: grid;
+      }
+
+      .status {
+        width: max-content;
+        max-width: 100%;
+      }
+
+      .controls {
+        position: static;
+      }
+
+      .metric-value {
+        font-size: 32px;
+      }
+    }
+
+    @media (max-width: 520px) {
+      .app {
+        width: calc(100% - 18px);
+      }
+
+      .brand {
+        align-items: flex-start;
+      }
+
+      .logo {
+        width: 40px;
+        height: 40px;
+      }
+
+      .controls,
+      .results {
+        padding: 14px;
+      }
+
+      .money-input {
+        grid-template-columns: 92px 1fr;
+      }
+
+      .money-input input {
+        font-size: 24px;
+        padding: 15px 12px;
+      }
+
+      .mini-grid,
+      .copy-row {
+        grid-template-columns: 1fr;
+      }
+
+      .copy-row {
+        display: grid;
+      }
+
+      .text-btn {
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <header class="topbar">
+      <div class="brand">
+        <div class="logo" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none">
+            <path d="M4 18.5h16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            <path d="M6 15l4.2-4.2 3.1 3.1L19 8.2" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M15.5 8.2H19v3.5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+        <div>
+          <h1>酒价毛利速算</h1>
+          <p class="subtitle">NZD · GST 15%</p>
+        </div>
+      </div>
+      <div class="status"><span class="pulse"></span><span id="liveStatus">就绪</span></div>
+    </header>
+
+    <section class="workspace">
+      <aside class="panel controls" aria-label="计算设置">
+        <h2 class="section-title">输入</h2>
+
+        <div class="field">
+          <label for="cost">进货价</label>
+          <div class="money-input">
+            <span class="currency-prefix">NZD $</span>
+            <input id="cost" type="number" inputmode="decimal" min="0" step="0.01" placeholder="不含 GST" autocomplete="off">
+          </div>
+        </div>
+
+        <div class="field">
+          <label>单位</label>
+          <div class="mode-toggle unit-toggle" role="tablist" aria-label="进货单位">
+            <button class="active" id="unitBottleBtn" type="button" data-unit="bottle">单瓶</button>
+            <button id="unitCase6Btn" type="button" data-unit="case6">6 瓶/箱</button>
+            <button id="unitCase12Btn" type="button" data-unit="case12">12 瓶/箱</button>
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="marginSlider">目标毛利</label>
+          <div class="slider-panel">
+            <div class="slider-readout">
+              <strong id="targetMarginText">31%</strong>
+              <span>滑动调整</span>
+            </div>
+            <input id="marginSlider" type="range" min="0" max="80" step="0.5" value="31">
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="currentPrice">当前卖价</label>
+          <div class="money-input">
+            <span class="currency-prefix">NZD $</span>
+            <input id="currentPrice" type="number" inputmode="decimal" min="0" step="0.01" placeholder="输入现卖价" autocomplete="off">
+          </div>
+        </div>
+
+        <div class="mini-grid">
+          <div class="compact-field">
+            <label for="quantity">数量</label>
+            <div class="compact-input">
+              <input id="quantity" type="number" inputmode="numeric" min="1" step="1" value="1" autocomplete="off">
+              <span>瓶</span>
+            </div>
+          </div>
+          <div class="compact-field">
+            <label for="rounding">取整</label>
+            <select class="compact-input" id="rounding" aria-label="价格取整">
+              <option value="0.01">保留分</option>
+              <option value="0.1">保留角</option>
+              <option value="1">取整数</option>
+              <option value="5">取 5 倍数</option>
+              <option value="10">取 10 倍数</option>
+            </select>
+          </div>
+        </div>
+
+      </aside>
+
+      <section class="panel results" aria-label="计算结果">
+        <div id="resultContent"></div>
+      </section>
+    </section>
+  </main>
+
+  <div class="toast" id="toast" role="status" aria-live="polite">已复制</div>
+
+  <script>
+    const GST_RATE = 15;
+
+    const state = {
+      unit: "bottle",
+      lastResult: null
+    };
+
+    const elements = {
+      cost: document.querySelector("#cost"),
+      currentPrice: document.querySelector("#currentPrice"),
+      quantity: document.querySelector("#quantity"),
+      rounding: document.querySelector("#rounding"),
+      unitBottleBtn: document.querySelector("#unitBottleBtn"),
+      unitCase6Btn: document.querySelector("#unitCase6Btn"),
+      unitCase12Btn: document.querySelector("#unitCase12Btn"),
+      marginSlider: document.querySelector("#marginSlider"),
+      targetMarginText: document.querySelector("#targetMarginText"),
+      resultContent: document.querySelector("#resultContent"),
+      liveStatus: document.querySelector("#liveStatus"),
+      toast: document.querySelector("#toast")
+    };
+
+    function numberValue(input, fallback = 0) {
+      const value = Number(input.value);
+      return Number.isFinite(value) ? value : fallback;
+    }
+
+    function rounded(value) {
+      const step = Number(elements.rounding.value) || 0.01;
+      const precision = step >= 1 ? 0 : String(step).split(".")[1]?.length || 2;
+      const normalized = Math.round((value + Number.EPSILON) * 1e10) / 1e10;
+      return Number((Math.ceil((normalized - Number.EPSILON) / step) * step).toFixed(precision));
+    }
+
+    function formatMoney(value) {
+      return `$${new Intl.NumberFormat("en-NZ", {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+      }).format(value)}`;
+    }
+
+    function gstRate() {
+      return GST_RATE;
+    }
+
+    function packSize() {
+      if (state.unit === "case6") return 6;
+      if (state.unit === "case12") return 12;
+      return 1;
+    }
+
+    function landedUnitCost(inputCostExGst) {
+      return (inputCostExGst * (1 + gstRate() / 100)) / packSize();
+    }
+
+    function unitLabelText() {
+      if (state.unit === "case6") return "一箱 6 瓶";
+      if (state.unit === "case12") return "一箱 12 瓶";
+      return "一瓶";
+    }
+
+    function formatRate(value) {
+      const roundedRate = Math.round(value * 10) / 10;
+      return `${Number.isInteger(roundedRate) ? roundedRate : roundedRate.toFixed(1)}%`;
+    }
+
+    function salePrice(cost, rate) {
+      return rate >= 100 ? NaN : cost / (1 - rate / 100);
+    }
+
+    function marginFrom(cost, price) {
+      if (!price) return 0;
+      return ((price - cost) / price) * 100;
+    }
+
+    function renderEmpty() {
+      elements.resultContent.innerHTML = `
+        <div class="empty">
+          <div>
+            <strong>输入进货价开始计算</strong>
+            <span>NZD · 不含 GST</span>
+          </div>
+        </div>
+      `;
+      state.lastResult = null;
+    }
+
+    function renderResults() {
+      const inputCostExGst = numberValue(elements.cost);
+      const currentPrice = numberValue(elements.currentPrice);
+      const quantity = Math.max(1, Math.floor(numberValue(elements.quantity, 1)));
+      const targetMargin = numberValue(elements.marginSlider, 31);
+      const unitCost = landedUnitCost(inputCostExGst);
+      const totalInputCostIncGst = inputCostExGst * (1 + gstRate() / 100);
+      const totalCost = unitCost * quantity;
+      const unitLabel = unitLabelText();
+      elements.targetMarginText.textContent = formatRate(targetMargin);
+
+      if (!inputCostExGst || inputCostExGst <= 0) {
+        renderEmpty();
+        elements.liveStatus.textContent = "等待输入进货价";
+        return;
+      }
+
+      const rawPrice = salePrice(unitCost, targetMargin);
+      const price = Number.isFinite(rawPrice) ? rounded(rawPrice) : NaN;
+      const unitProfit = Number.isFinite(price) ? price - unitCost : NaN;
+      const totalProfit = Number.isFinite(unitProfit) ? unitProfit * quantity : NaN;
+      const actualMargin = Number.isFinite(price) ? marginFrom(unitCost, price) : NaN;
+      const currentUnitProfit = currentPrice > 0 ? currentPrice - unitCost : NaN;
+      const currentTotalProfit = Number.isFinite(currentUnitProfit) ? currentUnitProfit * quantity : NaN;
+      const currentMargin = currentPrice > 0 ? marginFrom(unitCost, currentPrice) : NaN;
+
+      state.lastResult = {
+        inputCostExGst,
+        quantity,
+        targetMargin,
+        unitCost,
+        totalInputCostIncGst,
+        totalCost,
+        unitLabel,
+        price,
+        unitProfit,
+        totalProfit,
+        actualMargin,
+        currentPrice,
+        currentUnitProfit,
+        currentTotalProfit,
+        currentMargin
+      };
+
+      elements.resultContent.innerHTML = `
+        <div class="hero-metric">
+          <div class="metric">
+            <div class="metric-label">
+              <span>建议售价</span>
+              <span>NZD</span>
+            </div>
+            <div class="metric-value">${Number.isFinite(price) ? formatMoney(price) : "不可用"}</div>
+            <div class="metric-note">利润 ${Number.isFinite(unitProfit) ? formatMoney(unitProfit) : "-"} / 瓶 · ${quantity} 瓶 ${Number.isFinite(totalProfit) ? formatMoney(totalProfit) : "-"}</div>
+          </div>
+          <div class="metric secondary">
+            <div class="metric-label"><span>建议毛利</span><span>取整后</span></div>
+            <div class="metric-value">${Number.isFinite(actualMargin) ? formatRate(actualMargin) : "-"}</div>
+            <div class="metric-note">目标 ${formatRate(targetMargin)} · 成本 ${formatMoney(unitCost)}</div>
+          </div>
+        </div>
+
+        <div class="hero-metric">
+          <div class="metric secondary">
+            <div class="metric-label"><span>当前毛利</span><span>${currentPrice > 0 ? formatMoney(currentPrice) : "未输入"}</span></div>
+            <div class="metric-value">${Number.isFinite(currentMargin) ? formatRate(currentMargin) : "-"}</div>
+            <div class="metric-note">${currentPrice > 0 ? `利润 ${formatMoney(currentUnitProfit)} / 瓶 · ${quantity} 瓶 ${formatMoney(currentTotalProfit)}` : "填当前卖价后显示"}</div>
+          </div>
+          <div class="metric secondary">
+            <div class="metric-label"><span>差价</span><span>当前 - 建议</span></div>
+            <div class="metric-value">${currentPrice > 0 && Number.isFinite(price) ? formatMoney(currentPrice - price) : "-"}</div>
+            <div class="metric-note">${currentPrice > 0 && Number.isFinite(price) ? (currentPrice >= price ? "高于建议价" : "低于建议价") : "当前价 - 建议价"}</div>
+          </div>
+        </div>
+
+        <div class="summary-band">
+          <div class="summary">
+            <span>成本 / 瓶</span>
+            <strong>${formatMoney(unitCost)}</strong>
+          </div>
+          <div class="summary">
+            <span>总成本</span>
+            <strong>${formatMoney(totalCost)}</strong>
+          </div>
+          <div class="summary">
+            <span>进货单位</span>
+            <strong>${unitLabel}</strong>
+          </div>
+        </div>
+
+        <div class="summary-band">
+          <div class="summary">
+            <span>进货</span>
+            <strong>${formatMoney(inputCostExGst)}</strong>
+          </div>
+          <div class="summary">
+            <span>含 GST</span>
+            <strong>${formatMoney(totalInputCostIncGst)}</strong>
+          </div>
+          <div class="summary">
+            <span>GST</span>
+            <strong>${formatRate(gstRate())}</strong>
+          </div>
+        </div>
+        
+        <div class="copy-row">
+          <button class="text-btn primary" id="copyResults" type="button">
+            <svg viewBox="0 0 24 24" fill="none"><path d="M8 8V5.8C8 4.8 8.8 4 9.8 4h8.4c1 0 1.8.8 1.8 1.8v8.4c0 1-.8 1.8-1.8 1.8H16M5.8 8h8.4c1 0 1.8.8 1.8 1.8v8.4c0 1-.8 1.8-1.8 1.8H5.8c-1 0-1.8-.8-1.8-1.8V9.8c0-1 .8-1.8 1.8-1.8Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>
+            复制结果
+          </button>
+        </div>
+      `;
+
+      elements.liveStatus.textContent = `实际毛利率 ${formatRate(actualMargin)}`;
+    }
+
+    function setUnit(unit) {
+      state.unit = unit;
+      elements.unitBottleBtn.classList.toggle("active", unit === "bottle");
+      elements.unitCase6Btn.classList.toggle("active", unit === "case6");
+      elements.unitCase12Btn.classList.toggle("active", unit === "case12");
+      renderResults();
+    }
+
+    function copyResults() {
+      if (!state.lastResult) return;
+      const result = state.lastResult;
+      const lines = [
+        `进货价：${formatMoney(result.inputCostExGst)} NZD 不含 GST，单位：${result.unitLabel}，GST：${formatRate(gstRate())}`,
+        `单瓶含 GST 成本：${formatMoney(result.unitCost)}，目标毛利：${formatRate(result.targetMargin)}，建议价毛利：${formatRate(result.actualMargin)}`,
+        `建议单瓶售价：${formatMoney(result.price)}，单瓶利润：${formatMoney(result.unitProfit)}，${result.quantity} 瓶总利润：${formatMoney(result.totalProfit)}`,
+        result.currentPrice > 0
+          ? `当前卖价：${formatMoney(result.currentPrice)}，当前毛利：${formatRate(result.currentMargin)}，当前单瓶利润：${formatMoney(result.currentUnitProfit)}`
+          : "当前卖价：未输入"
+      ];
+      navigator.clipboard.writeText(lines.join("\n"))
+        .then(() => showToast("结果已复制"))
+        .catch(() => showToast("复制失败，可手动选中表格"));
+    }
+
+    function showToast(message) {
+      elements.toast.textContent = message;
+      elements.toast.classList.add("show");
+      clearTimeout(showToast.timer);
+      showToast.timer = setTimeout(() => elements.toast.classList.remove("show"), 1700);
+    }
+
+    elements.cost.addEventListener("input", renderResults);
+    elements.currentPrice.addEventListener("input", renderResults);
+    elements.quantity.addEventListener("input", renderResults);
+    elements.rounding.addEventListener("change", renderResults);
+    elements.marginSlider.addEventListener("input", renderResults);
+    elements.unitBottleBtn.addEventListener("click", () => setUnit("bottle"));
+    elements.unitCase6Btn.addEventListener("click", () => setUnit("case6"));
+    elements.unitCase12Btn.addEventListener("click", () => setUnit("case12"));
+
+    elements.resultContent.addEventListener("click", (event) => {
+      if (event.target.closest("#copyResults")) copyResults();
+    });
+
+    renderResults();
+
+    if ("serviceWorker" in navigator && location.protocol.startsWith("http")) {
+      navigator.serviceWorker.register("./sw.js").catch(() => {});
+    }
+  </script>
+</body>
+</html>
